@@ -1,0 +1,28 @@
+[project]
+name = "chat-local"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.17.2",
+    "httpx>=0.28.1",
+    "pdf2image>=1.17.0",
+    "pgvector>=0.4.2",
+    "psycopg2-binary>=2.9.9",
+    "pypdf>=6.5.0",
+    "python-dotenv>=1.2.1",
+    "ruff>=0.14.10",
+    "sqlalchemy>=2.0.45",
+    "typer>=0.21.0",
+]
+
+[tool.uv]
+package = true
+
+[tool.setuptools]
+py-modules = ["cli", "scripts"]
+
+[project.scripts]
+lint = "scripts:lint"
+fmt = "scripts:fmt"

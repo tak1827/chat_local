@@ -206,7 +206,12 @@ class MarkdownParser:
             return get_deepest_child(header.children[-1])
 
         # Helper function to flatten all headers with metadata
-        def flatten_headers(headers_list: List[Header], top_level_index: int, global_index: int = 0, depth: int = 0) -> tuple:
+        def flatten_headers(
+            headers_list: List[Header],
+            top_level_index: int,
+            global_index: int = 0,
+            depth: int = 0,
+        ) -> tuple:
             """
             Flatten headers with their metadata: (header, top_level_index, global_index, depth)
             Returns tuple of (result_list, next_global_index)
@@ -219,7 +224,10 @@ class MarkdownParser:
                 # Recursively add children
                 if header.children:
                     child_results, current_global_index = flatten_headers(
-                        header.children, top_level_index, current_global_index, depth + 1
+                        header.children,
+                        top_level_index,
+                        current_global_index,
+                        depth + 1,
                     )
                     result.extend(child_results)
             return result, current_global_index
@@ -228,7 +236,9 @@ class MarkdownParser:
         all_headers_flat = []
         global_idx = 0
         for top_idx, top_header in enumerate(self.headers):
-            header_list, global_idx = flatten_headers([top_header], top_idx, global_idx, 0)
+            header_list, global_idx = flatten_headers(
+                [top_header], top_idx, global_idx, 0
+            )
             all_headers_flat.extend(header_list)
 
         if not all_headers_flat:
@@ -309,7 +319,6 @@ class MarkdownParser:
 
         return newline.join(result_lines)
 
-
     def chunk(self, size: int) -> List[Chunk]:
         """
         Chunk the markdown text into chunks of size.
@@ -319,7 +328,13 @@ class MarkdownParser:
             return []
 
         if self.all_text_length <= size:
-            return [Chunk(pages=list(range(1, self.total_pages + 1)), text=self.all_text, length=self.all_text_length)]
+            return [
+                Chunk(
+                    pages=list(range(1, self.total_pages + 1)),
+                    text=self.all_text,
+                    length=self.all_text_length,
+                )
+            ]
 
         result = []
 
@@ -354,7 +369,9 @@ class MarkdownParser:
                 # Determine which pages this chunk spans
                 # This is approximate - we'd need to track page boundaries for accuracy
                 pages = list(range(1, self.total_pages + 1))
-                chunks.append(Chunk(pages=pages, text=chunk_text, length=len(chunk_text)))
+                chunks.append(
+                    Chunk(pages=pages, text=chunk_text, length=len(chunk_text))
+                )
                 start = end
             return chunks
 
@@ -399,11 +416,9 @@ class MarkdownParser:
                         seen.add(page)
                         unique_pages.append(page)
 
-                result.append(Chunk(
-                    pages=unique_pages,
-                    text=chunk_text,
-                    length=len(chunk_text)
-                ))
+                result.append(
+                    Chunk(pages=unique_pages, text=chunk_text, length=len(chunk_text))
+                )
 
                 # Start new chunk from current header
                 chunk_start = header.start_at
@@ -428,14 +443,15 @@ class MarkdownParser:
                     seen.add(page)
                     unique_pages.append(page)
 
-            result.append(Chunk(
-                pages=unique_pages,
-                text=last_chunk_text,
-                length=len(last_chunk_text)
-            ))
+            result.append(
+                Chunk(
+                    pages=unique_pages,
+                    text=last_chunk_text,
+                    length=len(last_chunk_text),
+                )
+            )
 
         return result
-
 
 
 if __name__ == "__main__":

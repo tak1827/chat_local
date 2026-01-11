@@ -54,6 +54,15 @@ def prompt_for_path() -> str:
     return path
 
 
+def prompt_for_text() -> str:
+    typer.echo("🔍 Interactive Text Input Tool")
+    typer.echo("=" * 40)
+    text = input("Enter text: ").strip()
+    if not text:
+        raise ValueError("Text cannot be empty. Please try again.")
+    return text
+
+
 def validate_path(path: str) -> Path:
     path_obj = Path(path)
     if not path_obj.exists():

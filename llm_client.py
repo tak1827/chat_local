@@ -116,6 +116,15 @@ class LLMClient:
         ]
         return self.chat_completion(messages, **kwargs)
 
+    def chat_completion_without_image(self, text: str, **kwargs) -> str:
+        """
+        Get chat completion from the model without image.
+        """
+        messages = [
+            {"role": "user", "content": [{"type": "text", "text": text}]},
+        ]
+        return self.chat_completion(messages, **kwargs)
+
     def close(self):
         """Close the HTTP client."""
         self.client.close()

@@ -3,12 +3,61 @@ import base64
 import typer
 from pathlib import Path
 from typing import Optional, Literal
-from util import prompt_for_path, validate_path, return_recursive_file_paths
+from util import (
+    prompt_for_path,
+    prompt_for_text,
+    validate_path,
+    return_recursive_file_paths,
+)
 from llm_client import LLMClient
 from db_client import DatabaseClient
-from embedding import Embedder, DPI_MAP, SUPPORTED_FILE_TYPES
+from embedder import Embedder, DPI_MAP, SUPPORTED_FILE_TYPES
+from system_prompt import get_rewrite_question_prompt, get_answer_prompt
 
 app = typer.Typer()
+
+
+@app.command()
+def infer(
+    question: str = typer.Argument(None, help="Question to infer"),
+):
+    try:
+        if not question:
+            question = prompt_for_text()
+
+        client = LLMClient(
+            os.getenv("LLM_API_BASE_URL"),
+            os.getenv("INFER_MODEL"),
+            os.getenv("EMBEDDING_MODEL"),
+        )
+
+        prompt = get_rewrite_question_prompt(question)
+        rewritten_question = client.chat_completion_without_image(prompt)
+
+        embeddings = client.get_embedding(rewritten_question)
+
+        db_client = DatabaseClient()
+
+        with db_client:
+            similar_chunks = db_client.similar_chunks(embeddings)
+            print("Similar chunks:", len(similar_chunks))
+            for chunk, distance in similar_chunks:
+                typer.echo(f"Similar chunk: {chunk.title}")
+                typer.echo(f"Distance: {distance}")
+                typer.echo(f"Content: {chunk.content}")
+                typer.echo("-" * 50)
+
+            # Extract just the chunks (first element of each tuple) for the prompt
+            chunks_only = [chunk for chunk, distance in similar_chunks]
+            answer_prompt = get_answer_prompt(question, chunks_only)
+            response = client.chat_completion_without_image(answer_prompt)
+            typer.echo("Answer:")
+            typer.echo("=" * 50)
+            typer.echo(response)
+
+    except Exception as e:
+        typer.echo(f"❌ Error: {e}")
+        exit(1)
 
 
 @app.command()

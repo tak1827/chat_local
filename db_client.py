@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional
 from sqlalchemy.orm import sessionmaker, Session
 from database import engine
 from chunks_table import ChunkTable
@@ -18,42 +18,17 @@ class DatabaseClient:
         self.Session = sessionmaker(bind=self.engine)
         self._session: Optional[Session] = None
 
-    def save_chunk(
-        self,
-        title: str,
-        content: str,
-        embedding: List[float],
-        meta: Optional[Dict[str, Any]] = None,
-    ) -> int:
+    def save_chunk(self, chunk_table: ChunkTable) -> int:
         """
         Save a chunk to the database.
-
-        Args:
-            title: Title of the chunk
-            content: Content/text of the chunk
-            embedding: Embedding vector (list of floats)
-            meta: Optional metadata dictionary
-
-        Returns:
-            The ID of the saved chunk
-
-        Raises:
-            Exception: If the database operation fails
         """
         if self._session is None:
             raise RuntimeError(
                 "Session not initialized. Use context manager or call start_session() first."
             )
-
-        chunk_record = ChunkTable(
-            title=title,
-            content=content,
-            meta=meta or {},
-            embedding=embedding,
-        )
-        self._session.add(chunk_record)
+        self._session.add(chunk_table)
         self._session.commit()
-        return chunk_record.id
+        return chunk_table.id
 
     def start_session(self) -> Session:
         """Start a new database session."""

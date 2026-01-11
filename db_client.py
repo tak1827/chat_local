@@ -28,7 +28,7 @@ class DatabaseClient:
                 "Session not initialized. Use context manager or call start_session() first."
             )
         self._session.add(chunk_table)
-        # Flush to generate the ID without committing
+            # Flush to generate the ID without committing
         # commit() is called in __exit__ when the context manager exits
         # This allows batching multiple chunks in a single transaction
         self._session.flush()

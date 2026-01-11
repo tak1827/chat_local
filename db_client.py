@@ -21,13 +21,17 @@ class DatabaseClient:
     def save_chunk(self, chunk_table: ChunkTable) -> int:
         """
         Save a chunk to the database.
+        Note: The chunk is added to the session and flushed (to get ID) but not committed until the context manager exits.
         """
         if self._session is None:
             raise RuntimeError(
                 "Session not initialized. Use context manager or call start_session() first."
             )
         self._session.add(chunk_table)
-        self._session.commit()
+        # Flush to generate the ID without committing
+        # commit() is called in __exit__ when the context manager exits
+        # This allows batching multiple chunks in a single transaction
+        self._session.flush()
         return chunk_table.id
 
     def start_session(self) -> Session:

@@ -10,6 +10,7 @@ from embedding import Embedder, DPI_MAP, SUPPORTED_FILE_TYPES
 
 app = typer.Typer()
 
+
 @app.command()
 def emb(
     path: Optional[str] = typer.Argument(None, help="Path to file or directory"),
@@ -59,8 +60,9 @@ def emb(
         typer.echo(f"❌ Error: {e}")
         exit(1)
 
+
 @app.command()
-def base64(
+def img_to_base64(
     path: Optional[str] = typer.Argument(None, help="Path to image file"),
 ):
     """Convert an image file to base64 format."""
@@ -77,7 +79,10 @@ def base64(
         # Check if it's an image file (basic check)
         image_extensions = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
         if path_obj.suffix.lower() not in image_extensions:
-            typer.echo(f"⚠️  Warning: File extension '{path_obj.suffix}' may not be a standard image format", err=True)
+            typer.echo(
+                f"⚠️  Warning: File extension '{path_obj.suffix}' may not be a standard image format",
+                err=True,
+            )
 
         # Read the image file as binary and convert to base64
         with open(path_obj, "rb") as image_file:

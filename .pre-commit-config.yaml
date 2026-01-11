@@ -1,0 +1,14 @@
+# Pre-commit hooks configuration
+# See https://pre-commit.com for more information
+
+repos:
+  # Local hook to run uv fmt
+  - repo: local
+    hooks:
+      - id: uv-fmt
+        name: Format code with uv fmt
+        entry: uv run fmt
+        language: system
+        types: [python]
+        pass_filenames: false
+        always_run: true

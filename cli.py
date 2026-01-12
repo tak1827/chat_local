@@ -13,8 +13,10 @@ from llm_client import LLMClient
 from db_client import DatabaseClient
 from embedder import Embedder, DPI_MAP, SUPPORTED_FILE_TYPES
 from system_prompt import get_rewrite_question_prompt, get_answer_prompt
+from logger import get_logger
 
 app = typer.Typer()
+logger = get_logger(__name__)
 
 
 @app.command()
@@ -23,6 +25,7 @@ def infer(
 ):
     try:
         if not question:
+            # Obtain the question from the user interactively
             question = prompt_for_text()
 
         client = LLMClient(
@@ -31,24 +34,22 @@ def infer(
             os.getenv("EMBEDDING_MODEL"),
         )
 
+        # Rewrite the question expanding the context of the question to retrieve more relevant chunks
         prompt = get_rewrite_question_prompt(question)
         rewritten_question = client.chat_completion_without_image(prompt)
-
         embeddings = client.get_embedding(rewritten_question)
 
-        db_client = DatabaseClient()
-
-        with db_client:
-            similar_chunks = db_client.similar_chunks(embeddings)
-            print("Similar chunks:", len(similar_chunks))
-            for chunk, distance in similar_chunks:
-                typer.echo(f"Similar chunk: {chunk.title}")
-                typer.echo(f"Distance: {distance}")
-                typer.echo(f"Content: {chunk.content}")
-                typer.echo("-" * 50)
+        with DatabaseClient() as db_client:
+            # Retrieve the similar chunks from the database
+            chunks_with_distance = db_client.similar_chunks(embeddings)
+            for chunk, distance in chunks_with_distance:
+                logger.debug(f"Similar chunk: {chunk.title}")
+                logger.debug(f"Distance: {distance}")
+                logger.debug(f"Content: {chunk.content}")
+                logger.debug("-" * 50)
 
             # Extract just the chunks (first element of each tuple) for the prompt
-            chunks_only = [chunk for chunk, distance in similar_chunks]
+            chunks_only = [chunk for chunk, distance in chunks_with_distance]
             answer_prompt = get_answer_prompt(question, chunks_only)
             response = client.chat_completion_without_image(answer_prompt)
             typer.echo("Answer:")
@@ -56,7 +57,7 @@ def infer(
             typer.echo(response)
 
     except Exception as e:
-        typer.echo(f"❌ Error: {e}")
+        logger.error(f"Error: {e}")
         exit(1)
 
 
@@ -95,18 +96,17 @@ def emb(
             os.getenv("INFER_MODEL"),
             os.getenv("EMBEDDING_MODEL"),
         )
-        db_client = DatabaseClient()
 
-        with db_client:
+        with DatabaseClient() as db_client:
             embedder = Embedder(client)
             for file_path in file_paths:
                 for chunk_table in embedder.embed_file(file_path, dpi=dpi):
-                    print("***" * 50)
+                    logger.debug("***" * 50)
                     chunk_id = db_client.save_chunk(chunk_table)
-                    typer.echo(f"Saved chunk to database with ID: {chunk_id}")
+                    logger.info(f"Saved chunk to database with ID: {chunk_id}")
 
     except Exception as e:
-        typer.echo(f"❌ Error: {e}")
+        logger.error(f"Error: {e}")
         exit(1)
 
 
@@ -128,9 +128,8 @@ def img_to_base64(
         # Check if it's an image file (basic check)
         image_extensions = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
         if path_obj.suffix.lower() not in image_extensions:
-            typer.echo(
-                f"⚠️  Warning: File extension '{path_obj.suffix}' may not be a standard image format",
-                err=True,
+            logger.warning(
+                f"File extension '{path_obj.suffix}' may not be a standard image format"
             )
 
         # Read the image file as binary and convert to base64
@@ -142,7 +141,7 @@ def img_to_base64(
         typer.echo(base64_image)
 
     except Exception as e:
-        typer.echo(f"❌ Error: {e}", err=True)
+        logger.error(f"Error: {e}")
         exit(1)
 
 

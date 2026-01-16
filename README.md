@@ -108,6 +108,64 @@ uv run pre-commit install
 uv run cli.py --help
 ```
 
+## Usage
+
+### Embedding Documents (`emb`)
+
+Embed PDF files into the database for later retrieval. The command processes PDFs by converting each page to images, extracting text via OCR, and storing chunks with embeddings.
+
+```sh
+# Embed a single PDF file
+uv run cli.py emb /path/to/document.pdf
+
+# Embed all PDFs in a directory
+uv run cli.py emb /path/to/documents/
+
+# Embed with custom resolution
+uv run cli.py emb /path/to/document.pdf --resolution high
+
+# Interactive mode (will prompt for path)
+uv run cli.py emb
+```
+
+**Options:**
+- `--resolution, -r`: Image resolution for OCR
+  - `low`: 50 DPI (faster, lower quality)
+  - `middle`: 100 DPI (default, balanced)
+  - `high`: 200 DPI (slower, higher quality)
+
+**What it does:**
+1. Converts each PDF page to an image
+2. Uses LLM to extract markdown text from images
+3. Chunks the text into manageable pieces
+4. Generates embeddings for each chunk
+5. Stores chunks in the database with metadata
+
+### Querying Documents (`infer`)
+
+Ask questions about your embedded documents. The system will find relevant chunks and generate answers based on the content.
+
+```sh
+# Ask a question directly
+uv run cli.py infer "What is the main topic of the document?"
+
+# Interactive mode (will prompt for question)
+uv run cli.py infer
+```
+
+**What it does:**
+1. Rewrites your question to improve retrieval
+2. Generates an embedding for the rewritten question
+3. Searches for similar chunks in the database using cosine similarity
+4. Uses the retrieved chunks as context
+5. Generates an answer based on the relevant content
+
+**Debug mode:**
+To see the retrieved chunks and their similarity distances:
+```sh
+LOG_LEVEL=debug uv run cli.py infer "your question"
+```
+
 ### Development Commands
 ```sh
 # Format code

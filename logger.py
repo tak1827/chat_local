@@ -13,11 +13,13 @@ LOG_LEVEL_MAP = {
     "err": logging.ERROR,
 }
 
-# Define the logger as a global variable to avoid creating a new logger for each call
+# Define the logger as a module-level variable to avoid creating a new logger for each call
 _logger: Optional[logging.Logger] = None
 
 
 def get_logger(name: Optional[str] = None) -> logging.Logger:
+    global _logger
+
     if _logger is not None:
         return _logger
 

@@ -4,6 +4,9 @@
 # Install PostgreSQL and pgvector extension
 brew install postgresql@17 pgvector
 
+# Show status
+brew services info postgresql@17
+
 # Start PostgreSQL service
 brew services start postgresql@17
 
@@ -18,12 +21,15 @@ createdb -E UTF8 chat
 psql chat
 ```
 
-Enable Vector Extension and Set User Password
-Once connected to psql, run the following SQL commands:
+Set User Password
+Once connected to psql, run the following SQL command:
 ```sql
--- Enable the pgvector extension
-CREATE EXTENSION vector;
-
 -- Set a password for the 'postgres' user
 ALTER USER postgres WITH PASSWORD '123456';
+```
+
+**Note:** The pgvector extension will be created automatically when you run migrations:
+```sh
+# Run migrations (this will create the vector extension automatically)
+alembic upgrade head
 ```
